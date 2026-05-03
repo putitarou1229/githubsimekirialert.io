@@ -3,14 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <meta name="theme-color" content="#4CAF50">
   <title>提出物レーダー</title>
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="icon.png">
 </head>
 <body>
 
 <header>
-  <h1>📌 提出物レーダー</h1>
+  <h1>📌 締切りアラーム 📌 </h1>
   <button id="addBtn">＋追加</button>
 </header>
 
@@ -70,5 +72,12 @@ const firebaseConfig = {
 
   initPush();
 </script>
+
+<script>
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("./sw.js");
+}
+</script>
+
 </body>
 </html>
