@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>提出物レーダー</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+  <h1>📌 提出物レーダー</h1>
+  <button id="addBtn">＋追加</button>
+</header>
+
+<main>
+  <ul id="list"></ul>
+</main>
+
+<!-- 追加モーダル -->
+<div id="modal" class="hidden">
+  <div class="modal-content">
+    <h2>提出物を追加</h2>
+    <input type="text" id="title" placeholder="例：体操服提出">
+    <input type="date" id="deadline">
+    <input type="file" id="image" accept="image/*">
+    <textarea id="memo" placeholder="メモ（任意）"></textarea>
+    <button id="saveBtn">保存</button>
+    <button id="closeBtn">閉じる</button>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
