@@ -1,5 +1,5 @@
 {
-  "name": "提出物レーダー",
+  "name": "締切りアラーム",
   "short_name": "提出物",
   "start_url": "./index.html",
   "display": "standalone",
