@@ -79,5 +79,12 @@ render();
 
 // Service Worker登録
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js');
-}
+navigator.serviceWorker.register('./sw.js');}
+
+// app
+// firebase
+// icon 
+// index 
+// manifest 
+// style 
+// sw 
