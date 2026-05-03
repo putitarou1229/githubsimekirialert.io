@@ -71,22 +71,26 @@
   // 初期化
   firebase.initializeApp(firebaseConfig);
 
-  const messaging = firebase.messaging();
+ const messaging = firebase.messaging();
 
-  // 通知許可＆トークン取得
-  async function initPush() {
-    const permission = await Notification.requestPermission();
+async function initPush() {
+  const permission = await Notification.requestPermission();
 
-    if (permission === "granted") {
-      const token = await messaging.getToken({
-        vapidKey: "BES2l0snOl90A-49auNHyDvUjCk7Gt6TOAd7-1kVhT7piiu5OCnYY4wkZtWgahEUgxTOwgEk8LixBEc2vP74gcc"
-      });
+  if (permission === "granted") {
 
-      console.log("トークン:", token);
-    } else {
-      console.log("通知拒否された");
-    }
+    // 👇ここが最重要
+    const registration = await navigator.serviceWorker.register(
+      '/githubsimekirialert.io/firebase-messaging-sw.js'
+    );
+
+    const token = await messaging.getToken({
+      vapidKey: "BES2l0snOl90A-49auNHyDvUjCk7Gt6TOAd7-1kVhT7piiu5OCnYY4wkZtWgahEUgxTOwgEk8LixBEc2vP74gcc",
+      serviceWorkerRegistration: registration
+    });
+
+    console.log("トークン:", token);
   }
+}
 
   initPush();
 </script>
