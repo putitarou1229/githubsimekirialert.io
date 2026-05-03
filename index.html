@@ -32,5 +32,64 @@
 </div>
 
 <script src="app.js"></script>
+
+<script type="module">
+  // Import the functions you need from the SDKs you need
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
+  // TODO: Add SDKs for Firebase products that you want to use
+  // https://firebase.google.com/docs/web/setup#available-libraries
+
+  // Your web app's Firebase configuration
+  const firebaseConfig = {
+    apiKey: "AIzaSyCIPQjiBJ_yXql51VVb54CZfEAha4CyJEg",
+    authDomain: "alert-55bd2.firebaseapp.com",
+    projectId: "alert-55bd2",
+    storageBucket: "alert-55bd2.firebasestorage.app",
+    messagingSenderId: "747701425490",
+    appId: "1:747701425490:web:f77d3cc86c420567aad68b"
+  };
+
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+</script>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-compat.js"></script>
+
+<script>
+  // Firebase設定（あなたのやつ）
+  const firebaseConfig = {
+    apiKey: "AIzaSyCPQiIjBJ_yQj5IVb54CZfEAh4CyJEg",
+    authDomain: "alert-55bd2.firebaseapp.com",
+    projectId: "alert-55bd2",
+    storageBucket: "alert-55bd2.appspot.com",
+    messagingSenderId: "747701425490",
+    appId: "1:747701425490:web:f77d3cc86c420567aad68b"
+  };
+
+  // 初期化
+  firebase.initializeApp(firebaseConfig);
+
+  const messaging = firebase.messaging();
+
+  // 通知許可＆トークン取得
+  async function initPush() {
+    const permission = await Notification.requestPermission();
+
+    if (permission === "granted") {
+      const token = await messaging.getToken({
+        vapidKey: "BES2l0snOl90A-49auNHyDvUjCk7Gt6TOAd7-1kVhT7piiu5OCnYY4wkZtWgahEUgxTOwgEk8LixBEc2vP74gcc"
+      });
+
+      console.log("トークン:", token);
+    } else {
+      console.log("通知拒否された");
+    }
+  }
+
+  initPush();
+</script>
+
 </body>
 </html>
