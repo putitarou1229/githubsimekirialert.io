@@ -143,6 +143,9 @@ document.getElementById("saveBtn").onclick = () => {
 render();
 dailyCheck();
 
+console.log("通知許可:", Notification.permission);
+alert(Notification.permission);
+
 // 🔔 通知許可（Firebase用）
 if ("Notification" in window) {
   Notification.requestPermission();
