@@ -53,6 +53,15 @@ function checkDeadlines() {
   });
 }
 
+messaging.onMessage((payload) => {
+  console.log("フォアグラウンド通知:", payload);
+
+  new Notification(payload.notification.title, {
+    body: payload.notification.body,
+    icon: "/icon.png"
+  });
+});
+
 // 📅 毎日1回だけチェック
 function dailyCheck() {
   const last = localStorage.getItem("lastCheckDate");
@@ -143,8 +152,9 @@ document.getElementById("saveBtn").onclick = () => {
 render();
 dailyCheck();
 
-console.log("通知許可:", Notification.permission);
-alert(Notification.permission);
+//通知試し
+// console.log("通知許可:", Notification.permission);
+// alert(Notification.permission);
 
 // 🔔 通知許可（Firebase用）
 if ("Notification" in window) {
