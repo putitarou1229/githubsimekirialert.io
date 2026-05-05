@@ -17,15 +17,11 @@ import {
 
 import {
   getAuth,
-  signInAnonymously,
-  onAuthStateChanged
+  signInAnonymously
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 window.onload = async () => {
-  console.log("saveBtn:", document.getElementById("saveBtn"));
-  document.getElementById("saveBtn").onclick = () => {
-    console.log("クリックされた");
-  };
+
   // ======================
   // Firebase初期化
   // ======================
@@ -37,25 +33,31 @@ window.onload = async () => {
   };
 
   const app = initializeApp(firebaseConfig);
-  const messaging = getMessaging(app);
   const db = getFirestore(app);
   const auth = getAuth(app);
+  const messaging = getMessaging(app);
+
+  const list = document.getElementById("list");
+  const saveBtn = document.getElementById("saveBtn");
+
+  if (!saveBtn || !list) {
+    console.error("HTML要素が見つかりません");
+    return;
+  }
 
   let uid = null;
-  const list = document.getElementById("list");
 
   // ======================
   // 匿名ログイン
   // ======================
-  await signInAnonymously(auth);
-
-  onAuthStateChanged(auth, (user) => {
-    if (user) {
-      uid = user.uid;
-      console.log("ログインOK:", uid);
-      startApp();
-    }
-  });
+  try {
+    const user = await signInAnonymously(auth);
+    uid = user.user.uid;
+    console.log("ログインOK:", uid);
+  } catch (e) {
+    console.error("ログイン失敗:", e);
+    return;
+  }
 
   // ======================
   // 通知許可
@@ -63,12 +65,12 @@ window.onload = async () => {
   await Notification.requestPermission();
 
   // ======================
-  // SW
+  // Service Worker & Token
   // ======================
   const registration = await navigator.serviceWorker.register("./firebase-messaging-sw.js");
 
   await getToken(messaging, {
-    vapidKey: "BES2l0snOl90A-49auNHyDvUjCk7Gt6TOAd7-1kVhT7piiu5OCnYY4wkZtWgahEUgxTOwgEk8LixBEc2vP74gcc",
+    vapidKey: "BES2l0snOl90A-49auNHyDvUjCk7Gt6TOAd7-1kVhT7piiu5OCnYY4wkZtWgahEUgxEk8LixBEc2vP74gcc",
     serviceWorkerRegistration: registration
   });
 
@@ -77,144 +79,146 @@ window.onload = async () => {
   });
 
   // ======================
-  // メインアプリ
+  // 日数計算
   // ======================
-  function startApp() {
+  function getDaysLeft(deadline) {
+    const now = new Date();
+    const target = new Date(deadline);
+    return Math.ceil((target - now) / (1000 * 60 * 60 * 24));
+  }
 
-    function getDaysLeft(deadline) {
-      const now = new Date();
-      const target = new Date(deadline);
-      return Math.ceil((target - now) / (1000 * 60 * 60 * 24));
-    }
+  function getStatus(days) {
+    if (days <= 0) return "overdue";
+    if (days <= 3) return "warning";
+    return "safe";
+  }
 
-    function getStatus(days) {
-      if (days <= 0) return "overdue";
-      if (days <= 3) return "warning";
-      return "safe";
-    }
+  // ======================
+  // Firestoreリアルタイム取得
+  // ======================
+  onSnapshot(collection(db, "users", uid, "tasks"), (snapshot) => {
 
-    // ======================
-    // リアルタイム取得
-    // ======================
-    onSnapshot(collection(db, "users", uid, "tasks"), (snapshot) => {
+    let items = [];
 
-      let items = [];
-
-      snapshot.forEach((docSnap) => {
-        items.push({ id: docSnap.id, ...docSnap.data() });
-      });
-
-      render(items);
+    snapshot.forEach((docSnap) => {
+      items.push({ id: docSnap.id, ...docSnap.data() });
     });
 
-    // ======================
-    // 描画
-    // ======================
-    function render(items) {
+    render(items);
+  });
 
-      list.innerHTML = "";
+  // ======================
+  // 描画
+  // ======================
+  function render(items) {
 
-      items.sort((a, b) =>
-        new Date(a.deadline) - new Date(b.deadline)
+    list.innerHTML = "";
+
+    items.sort((a, b) =>
+      new Date(a.deadline) - new Date(b.deadline)
+    );
+
+    items.forEach(item => {
+
+      const days = getDaysLeft(item.deadline);
+      const status = getStatus(days);
+
+      const li = document.createElement("li");
+
+      li.innerHTML = `
+        <div class="task ${status}">
+          <h3>${item.title}</h3>
+          <p>期限: ${item.deadline}</p>
+          <p>残り: ${days}日</p>
+          <button onclick="complete('${item.id}')">完了</button>
+        </div>
+      `;
+
+      list.appendChild(li);
+    });
+  }
+
+  // ======================
+  // 完了処理
+  // ======================
+  window.complete = async function (id) {
+    await updateDoc(doc(db, "users", uid, "tasks", id), {
+      completed: true
+    });
+  };
+
+  // ======================
+  // 追加ボタン（完成版）
+  // ======================
+  saveBtn.onclick = async () => {
+
+    console.log("保存ボタン押された");
+
+    if (!uid) {
+      console.error("UID未取得");
+      return;
+    }
+
+    const title = document.getElementById("title")?.value;
+    const deadline = document.getElementById("deadline")?.value;
+
+    if (!title || !deadline) {
+      alert("入力してください");
+      return;
+    }
+
+    try {
+      const ref = await addDoc(
+        collection(db, "users", uid, "tasks"),
+        {
+          title: title.trim(),
+          deadline,
+          completed: false,
+          notified: {
+            before: false,
+            today: false,
+            overdue: false
+          },
+          createdAt: new Date()
+        }
       );
 
-      items.forEach(item => {
+      console.log("保存成功:", ref.id);
 
-        const days = getDaysLeft(item.deadline);
-        const status = getStatus(days);
+      document.getElementById("title").value = "";
+      document.getElementById("deadline").value = "";
 
-        const li = document.createElement("li");
-
-        li.innerHTML = `
-          <div class="task ${status}">
-            <h3>${item.title}</h3>
-            <p>期限: ${item.deadline}</p>
-            <p>残り: ${days}日</p>
-            <button onclick="complete('${item.id}')">完了</button>
-          </div>
-        `;
-
-        list.appendChild(li);
-      });
+    } catch (e) {
+      console.error("保存失敗:", e);
     }
+  };
 
-    // ======================
-    // 完了
-    // ======================
-    window.complete = async function (id) {
-      await updateDoc(doc(db, "users", uid, "tasks", id), {
-        completed: true
-      });
-    };
+  // ======================
+  // 擬似Cron通知
+  // ======================
+  async function checkTasks() {
 
-    // ======================
-    // 追加
-    // ======================
-    // document.getElementById("saveBtn").onclick = async () => {
+    const snapshot = await getDocs(collection(db, "users", uid, "tasks"));
 
-    //   const title = document.getElementById("title").value;
-    //   const deadline = document.getElementById("deadline").value;
+    snapshot.forEach(docSnap => {
 
-    //   await addDoc(collection(db, "users", uid, "tasks"), {
-    //     title,
-    //     deadline,
-    //     completed: false,
-    //     notified: {
-    //       before: false,
-    //       today: false,
-    //       overdue: false
-    //     }
-    //   });
-    // };
+      const item = docSnap.data();
 
-document.getElementById("saveBtn").onclick = async () => {
-  console.log("保存ボタン押された");
+      if (item.completed) return;
+      if (Notification.permission !== "granted") return;
 
-  try {
-    const ref = await addDoc(collection(db, "users", uid, "tasks"), {
-      title: "テスト",
-      deadline: "2026-01-01",
-      completed: false
+      const days = getDaysLeft(item.deadline);
+
+      if (days === 1 || days === 0) {
+        new Notification("締切アラート", {
+          body: `${item.title}（残り${days}日）`,
+          icon: "./icon.png",
+          tag: `task-${docSnap.id}-${days}`
+        });
+      }
     });
-
-    console.log("保存成功:", ref.id);
-
-  } catch (e) {
-    console.error("保存失敗:", e);
-  }
-};
-
-    // ======================
-    // 擬似Cron（自動通知）
-    // ======================
-    async function checkTasks() {
-
-      const snapshot = await getDocs(collection(db, "users", uid, "tasks"));
-
-      snapshot.forEach(async (docSnap) => {
-
-        const item = { id: docSnap.id, ...docSnap.data() };
-
-        if (item.completed) return;
-
-        const days = new Date(item.deadline) - new Date();
-        const d = Math.ceil(days / (1000 * 60 * 60 * 24));
-
-        if (Notification.permission !== "granted") return;
-
-        if (d === 1 || d === 0) {
-          new Notification("締切アラート", {
-            body: `${item.title}（残り${d}日）`,
-            icon: "./icon.png",
-            tag: `task-${item.id}-${d}`
-          });
-        }
-      });
-    }
-
-    checkTasks();
-    setInterval(checkTasks, 5 * 60 * 1000);
-
   }
 
+  checkTasks();
+  setInterval(checkTasks, 5 * 60 * 1000);
 };
