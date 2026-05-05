@@ -54,7 +54,7 @@ window.onload = async () => {
   `);
 
   // ======================
-  // フォアグラウンド通知
+  // フォアグラウンド通知→通知担当をSWに丸投げしてます
   // ======================
   // onMessage(messaging, (payload) => {
   //   new Notification(payload.notification.title, {
