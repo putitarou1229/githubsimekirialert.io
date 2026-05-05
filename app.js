@@ -1,10 +1,30 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging.js";
+import {
+  getMessaging,
+  getToken,
+  onMessage
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging.js";
+
+import {
+  getFirestore,
+  collection,
+  addDoc,
+  updateDoc,
+  doc,
+  getDocs,
+  onSnapshot
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+import {
+  getAuth,
+  signInAnonymously,
+  onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 window.onload = async () => {
 
   // ======================
-  // Firebase
+  // Firebase初期化
   // ======================
   const firebaseConfig = {
     apiKey: "AIzaSyBg2JChe4VhOjkbypEdHjUpGXDr6mKS3bM",
@@ -15,117 +35,166 @@ window.onload = async () => {
 
   const app = initializeApp(firebaseConfig);
   const messaging = getMessaging(app);
+  const db = getFirestore(app);
+  const auth = getAuth(app);
+
+  let uid = null;
+  const list = document.getElementById("list");
+
+  // ======================
+  // 匿名ログイン
+  // ======================
+  await signInAnonymously(auth);
+
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      uid = user.uid;
+      console.log("ログインOK:", uid);
+      startApp();
+    }
+  });
 
   // ======================
   // 通知許可
   // ======================
-  const permission = await Notification.requestPermission();
-
-  if (permission !== "granted") {
-    alert("通知が拒否されています");
-    return;
-  }
+  await Notification.requestPermission();
 
   // ======================
-  // SW登録
+  // SW
   // ======================
   const registration = await navigator.serviceWorker.register("./firebase-messaging-sw.js");
 
-  // ======================
-  // トークン取得
-  // ======================
-  const token = await getToken(messaging, {
+  await getToken(messaging, {
     vapidKey: "BES2l0snOl90A-49auNHyDvUjCk7Gt6TOAd7-1kVhT7piiu5OCnYY4wkZtWgahEUgxTOwgEk8LixBEc2vP74gcc",
     serviceWorkerRegistration: registration
   });
 
-  if (!token) {
-    console.error("❌ トークン取得失敗");
-    return;
-  }
-
-  console.log("✅ トークン:", token);
-
-  document.body.insertAdjacentHTML("beforeend", `
-    <div style="padding:10px; word-break:break-all;">
-      <h3>トークン</h3>
-      <p>${token}</p>
-    </div>
-  `);
+  onMessage(messaging, (payload) => {
+    console.log("foreground:", payload);
+  });
 
   // ======================
-  // フォアグラウンド通知→通知担当をSWに丸投げしてます
+  // メインアプリ
   // ======================
-  // onMessage(messaging, (payload) => {
-  //   new Notification(payload.notification.title, {
-  //     body: payload.notification.body,
-  //     icon: "./icon.png"
-  //   });
-  // });
+  function startApp() {
 
-  // ======================
-  // アプリ機能
-  // ======================
-
-  const list = document.getElementById("list");
-  const modal = document.getElementById("modal");
-  const addBtn = document.getElementById("addBtn");
-  const closeBtn = document.getElementById("closeBtn");
-  const saveBtn = document.getElementById("saveBtn");
-
-  // ★ここ超重要（クラッシュ防止）
-  if (!list || !modal || !addBtn || !closeBtn || !saveBtn) {
-    console.error("❌ HTML要素が見つかりません");
-    return;
-  }
-
-  addBtn.onclick = () => modal.classList.remove("hidden");
-  closeBtn.onclick = () => modal.classList.add("hidden");
-
-  let items = JSON.parse(localStorage.getItem("items")) || [];
-
-  function saveData() {
-    localStorage.setItem("items", JSON.stringify(items));
-  }
-
-  function render() {
-    list.innerHTML = "";
-
-    items.forEach((item, index) => {
-      const li = document.createElement("li");
-
-      li.innerHTML = `
-        <h3>${item.title}</h3>
-        <p>${item.deadline}</p>
-        <button onclick="complete(${index})">完了</button>
-      `;
-
-      list.appendChild(li);
-    });
-  }
-
-  window.complete = function (index) {
-    items.splice(index, 1);
-    saveData();
-    render();
-  };
-
-  saveBtn.onclick = () => {
-    const title = document.getElementById("title")?.value;
-    const deadline = document.getElementById("deadline")?.value;
-
-    if (!title || !deadline) {
-      alert("入力して");
-      return;
+    function getDaysLeft(deadline) {
+      const now = new Date();
+      const target = new Date(deadline);
+      return Math.ceil((target - now) / (1000 * 60 * 60 * 24));
     }
 
-    items.push({ title, deadline });
+    function getStatus(days) {
+      if (days <= 0) return "overdue";
+      if (days <= 3) return "warning";
+      return "safe";
+    }
 
-    saveData();
-    render();
+    // ======================
+    // リアルタイム取得
+    // ======================
+    onSnapshot(collection(db, "users", uid, "tasks"), (snapshot) => {
 
-    modal.classList.add("hidden");
-  };
+      let items = [];
 
-  render();
+      snapshot.forEach((docSnap) => {
+        items.push({ id: docSnap.id, ...docSnap.data() });
+      });
+
+      render(items);
+    });
+
+    // ======================
+    // 描画
+    // ======================
+    function render(items) {
+
+      list.innerHTML = "";
+
+      items.sort((a, b) =>
+        new Date(a.deadline) - new Date(b.deadline)
+      );
+
+      items.forEach(item => {
+
+        const days = getDaysLeft(item.deadline);
+        const status = getStatus(days);
+
+        const li = document.createElement("li");
+
+        li.innerHTML = `
+          <div class="task ${status}">
+            <h3>${item.title}</h3>
+            <p>期限: ${item.deadline}</p>
+            <p>残り: ${days}日</p>
+            <button onclick="complete('${item.id}')">完了</button>
+          </div>
+        `;
+
+        list.appendChild(li);
+      });
+    }
+
+    // ======================
+    // 完了
+    // ======================
+    window.complete = async function (id) {
+      await updateDoc(doc(db, "users", uid, "tasks", id), {
+        completed: true
+      });
+    };
+
+    // ======================
+    // 追加
+    // ======================
+    document.getElementById("saveBtn").onclick = async () => {
+
+      const title = document.getElementById("title").value;
+      const deadline = document.getElementById("deadline").value;
+
+      await addDoc(collection(db, "users", uid, "tasks"), {
+        title,
+        deadline,
+        completed: false,
+        notified: {
+          before: false,
+          today: false,
+          overdue: false
+        }
+      });
+    };
+
+    // ======================
+    // 擬似Cron（自動通知）
+    // ======================
+    async function checkTasks() {
+
+      const snapshot = await getDocs(collection(db, "users", uid, "tasks"));
+
+      snapshot.forEach(async (docSnap) => {
+
+        const item = { id: docSnap.id, ...docSnap.data() };
+
+        if (item.completed) return;
+
+        const days = new Date(item.deadline) - new Date();
+        const d = Math.ceil(days / (1000 * 60 * 60 * 24));
+
+        if (Notification.permission !== "granted") return;
+
+        if (d === 1 || d === 0) {
+          new Notification("締切アラート", {
+            body: `${item.title}（残り${d}日）`,
+            icon: "./icon.png",
+            tag: `task-${item.id}-${d}`
+          });
+        }
+      });
+    }
+
+    checkTasks();
+    setInterval(checkTasks, 5 * 60 * 1000);
+
+  }
+
 };
