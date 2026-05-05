@@ -1,9 +1,8 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging.js";
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
 
-  // 🔧 Firebase初期化
   const firebaseConfig = {
     apiKey: "AIzaSyBg2JChe4VhOjkbypEdHjUpGXDr6mKS3bM",
     messagingSenderId: "747701425490",
@@ -17,6 +16,9 @@ document.addEventListener("DOMContentLoaded", () => {
   // 🔔 通知許可
   await Notification.requestPermission();
 
+  // 📱 SW登録（先に！）
+  const registration = await navigator.serviceWorker.register("./firebase-messaging-sw.js");
+
   // 🔑 トークン取得
   const token = await getToken(messaging, {
     vapidKey: "BES2l0snOl90A-49auNHyDvUjCk7Gt6TOAd7-1kVhT7piiu5OCnYY4wkZtWgahEUgxTOwgEk8LixBEc2vP74gcc",
@@ -25,6 +27,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
   console.log("トークン:", token);
 
+  // 👇 画面に表示（これが答え）
+  document.body.insertAdjacentHTML("beforeend", `
+    <div style="padding:10px; word-break:break-all;">
+      <h3>トークン</h3>
+      <p>${token}</p>
+    </div>
+  `);
+
   // 🔔 フォアグラウンド通知
   onMessage(messaging, (payload) => {
     new Notification(payload.notification.title, {
@@ -32,6 +42,7 @@ document.addEventListener("DOMContentLoaded", () => {
       icon: "./icon.png"
     });
   });
+
 
   // 📱 SW登録
   const registration = await navigator.serviceWorker.register("./firebase-messaging-sw.js");
