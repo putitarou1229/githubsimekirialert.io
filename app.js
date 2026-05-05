@@ -22,7 +22,10 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 window.onload = async () => {
-
+  console.log("saveBtn:", document.getElementById("saveBtn"));
+  document.getElementById("saveBtn").onclick = () => {
+    console.log("クリックされた");
+  };
   // ======================
   // Firebase初期化
   // ======================
