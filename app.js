@@ -1,8 +1,11 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging.js";
 
-document.addEventListener("DOMContentLoaded", async () => {
+window.onload = async () => {
 
+  // ======================
+  // Firebase
+  // ======================
   const firebaseConfig = {
     apiKey: "AIzaSyBg2JChe4VhOjkbypEdHjUpGXDr6mKS3bM",
     messagingSenderId: "747701425490",
@@ -13,28 +16,36 @@ document.addEventListener("DOMContentLoaded", async () => {
   const app = initializeApp(firebaseConfig);
   const messaging = getMessaging(app);
 
-  // 🔔 通知許可
+  // ======================
+  // 通知許可
+  // ======================
   const permission = await Notification.requestPermission();
+
   if (permission !== "granted") {
     alert("通知が拒否されています");
     return;
   }
-  // 📱 SW登録（先に！）
+
+  // ======================
+  // SW登録
+  // ======================
   const registration = await navigator.serviceWorker.register("./firebase-messaging-sw.js");
 
-  // 🔑 トークン取得
+  // ======================
+  // トークン取得
+  // ======================
   const token = await getToken(messaging, {
     vapidKey: "BES2l0snOl90A-49auNHyDvUjCk7Gt6TOAd7-1kVhT7piiu5OCnYY4wkZtWgahEUgxTOwgEk8LixBEc2vP74gcc",
     serviceWorkerRegistration: registration
   });
 
-  console.log("トークン:", token);
-
   if (!token) {
-    console.log("トークン取得失敗");
+    console.error("❌ トークン取得失敗");
+    return;
   }
 
-  // 👇 画面に表示（これが答え）
+  console.log("✅ トークン:", token);
+
   document.body.insertAdjacentHTML("beforeend", `
     <div style="padding:10px; word-break:break-all;">
       <h3>トークン</h3>
@@ -42,7 +53,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     </div>
   `);
 
-  // 🔔 フォアグラウンド通知
+  // ======================
+  // フォアグラウンド通知
+  // ======================
   onMessage(messaging, (payload) => {
     new Notification(payload.notification.title, {
       body: payload.notification.body,
@@ -50,21 +63,24 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   });
 
-
   // ======================
   // アプリ機能
   // ======================
 
   const list = document.getElementById("list");
   const modal = document.getElementById("modal");
+  const addBtn = document.getElementById("addBtn");
+  const closeBtn = document.getElementById("closeBtn");
+  const saveBtn = document.getElementById("saveBtn");
 
-  document.getElementById("addBtn").onclick = () => {
-    modal.classList.remove("hidden");
-  };
+  // ★ここ超重要（クラッシュ防止）
+  if (!list || !modal || !addBtn || !closeBtn || !saveBtn) {
+    console.error("❌ HTML要素が見つかりません");
+    return;
+  }
 
-  document.getElementById("closeBtn").onclick = () => {
-    modal.classList.add("hidden");
-  };
+  addBtn.onclick = () => modal.classList.remove("hidden");
+  closeBtn.onclick = () => modal.classList.add("hidden");
 
   let items = JSON.parse(localStorage.getItem("items")) || [];
 
@@ -94,11 +110,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     render();
   };
 
-  document.getElementById("saveBtn").onclick = () => {
-    const title = document.getElementById("title").value;
-    const deadline = document.getElementById("deadline").value;
+  saveBtn.onclick = () => {
+    const title = document.getElementById("title")?.value;
+    const deadline = document.getElementById("deadline")?.value;
 
-    if (!title || !deadline) return alert("入力して");
+    if (!title || !deadline) {
+      alert("入力して");
+      return;
+    }
 
     items.push({ title, deadline });
 
@@ -109,5 +128,4 @@ document.addEventListener("DOMContentLoaded", async () => {
   };
 
   render();
-
-});
+};
