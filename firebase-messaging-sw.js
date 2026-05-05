@@ -4,7 +4,7 @@ importScripts('https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-comp
 
 // 🔧 Firebase初期化
 firebase.initializeApp({
-  apiKey: "AIzaSyCPQiIjBJ_yQj5IVb54CZfEAh4CyJEg",
+  apiKey: "AIzaSyBg2JChe4VhOjkbypEdHjUpGXDr6mKS3bM",
   messagingSenderId: "747701425490",
   projectId: "alert-55bd2",
   appId: "1:747701425490:web:f77d3cc86c420567aad68b"
@@ -16,15 +16,15 @@ const messaging = firebase.messaging();
 // ==============================
 // 🔔 プッシュ通知（バックグラウンド）
 // ==============================
-messaging.onBackgroundMessage(function(payload) {
+messaging.onBackgroundMessage(function (payload) {
   console.log("バックグラウンド通知:", payload);
 
   self.registration.showNotification(
     payload.notification?.title || "締切りアラーム",
     {
       body: payload.notification?.body || "通知があります",
-      icon: "/icon.png",
-      badge: "/icon.png",
+      icon: "./icon.png",
+      badge: "./icon.png",
       vibrate: [200, 100, 200],
       tag: "deadline-alert",
       renotify: true
@@ -36,7 +36,7 @@ messaging.onBackgroundMessage(function(payload) {
 // ==============================
 // 📦 キャッシュ設定（オフライン対応）
 // ==============================
-const CACHE_NAME = "deadline-app-v1";
+const CACHE_NAME = "deadline-app-v2";
 
 const urlsToCache = [
   "./",

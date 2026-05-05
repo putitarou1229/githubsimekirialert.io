@@ -1,3 +1,75 @@
+// 🔥 Firebase読み込み
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging.js";
+
+// 🔧 Firebase初期化
+const firebaseConfig = {
+  apiKey: "AIzaSyBg2JChe4VhOjkbypEdHjUpGXDr6mKS3bM",
+  messagingSenderId: "747701425490",
+  projectId: "alert-55bd2",
+  appId: "1:747701425490:web:f77d3cc86c420567aad68b"
+};
+
+const app = initializeApp(firebaseConfig);
+const messaging = getMessaging(app);
+
+
+// ==============================
+// 🔑 トークン取得（スマホ表示）
+// ==============================
+getToken(messaging, {
+  vapidKey: "BES2l0snOl90A-49auNHyDvUjCk7Gt6TOAd7-1kVhT7piiu5OCnYY4wkZtWgahEUgxTOwgEk8LixBEc2vP74gcc"
+}).then((currentToken) => {
+  if (currentToken) {
+    console.log("トークン:", currentToken);
+
+    // 👇 スマホでも見えるように表示
+    document.body.innerHTML += `
+      <div style="padding:10px; word-break:break-all; background:#fff;">
+        <h3>スマホ用トークン</h3>
+        <p>${currentToken}</p>
+      </div>
+    `;
+  } else {
+    alert("トークン取得失敗");
+  }
+}).catch((err) => {
+  console.error("トークンエラー:", err);
+});
+
+
+// ==============================
+// 🔔 フォアグラウンド通知
+// ==============================
+onMessage(messaging, (payload) => {
+  console.log("フォアグラウンド通知:", payload);
+
+  new Notification(payload.notification.title, {
+    body: payload.notification.body,
+    icon: "./icon.png"
+  });
+});
+
+
+// ==============================
+// 📱 Service Worker登録
+// ==============================
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("./firebase-messaging-sw.js");
+}
+
+
+// ==============================
+// 🔔 通知許可
+// ==============================
+if ("Notification" in window) {
+  Notification.requestPermission();
+}
+
+
+// ==============================
+// 📦 既存アプリ機能
+// ==============================
 const list = document.getElementById("list");
 const modal = document.getElementById("modal");
 
@@ -9,11 +81,9 @@ document.getElementById("closeBtn").onclick = () => {
   modal.classList.add("hidden");
 };
 
-// 📦 データ
 let items = JSON.parse(localStorage.getItem("items")) || [];
 let notified = JSON.parse(localStorage.getItem("notified")) || {};
 
-// 🔄 毎日リセット（通知重複防止）
 const todayKey = new Date().toDateString();
 const lastReset = localStorage.getItem("lastReset");
 
@@ -23,12 +93,10 @@ if (lastReset !== todayKey) {
   notified = {};
 }
 
-// 💾 保存
 function saveData() {
   localStorage.setItem("items", JSON.stringify(items));
 }
 
-// 🚨 期限チェック（Firebase通知用フラグだけ管理）
 function checkDeadlines() {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -39,13 +107,10 @@ function checkDeadlines() {
 
     const diff = Math.ceil((d - today) / (1000 * 60 * 60 * 24));
 
-    // 3日前〜当日だけ対象
     if (diff <= 3 && diff >= 0) {
       const key = `${item.title}_${item.deadline}_${diff}`;
 
-      // 通知済みチェック（重複防止）
       if (!notified[key]) {
-        // ★ Firebase側で通知する想定なのでここでは記録だけ
         notified[key] = true;
         localStorage.setItem("notified", JSON.stringify(notified));
       }
@@ -53,16 +118,6 @@ function checkDeadlines() {
   });
 }
 
-messaging.onMessage((payload) => {
-  console.log("フォアグラウンド通知:", payload);
-
-  new Notification(payload.notification.title, {
-    body: payload.notification.body,
-    icon: "/icon.png"
-  });
-});
-
-// 📅 毎日1回だけチェック
 function dailyCheck() {
   const last = localStorage.getItem("lastCheckDate");
   const today = new Date().toDateString();
@@ -73,7 +128,6 @@ function dailyCheck() {
   localStorage.setItem("lastCheckDate", today);
 }
 
-// 🎨 表示
 function render() {
   list.innerHTML = "";
 
@@ -90,10 +144,7 @@ function render() {
 
     const diff = Math.ceil((d - today) / (1000 * 60 * 60 * 24));
 
-    // 🎨 色分け
-    if (diff < 0) {
-      li.classList.add("danger");
-    } else if (diff === 0) {
+    if (diff <= 0) {
       li.classList.add("danger");
     } else if (diff === 1) {
       li.classList.add("warning");
@@ -112,7 +163,6 @@ function render() {
   });
 }
 
-// ❌ 完了
 function complete(index) {
   items.splice(index, 1);
   saveData();
@@ -120,7 +170,6 @@ function complete(index) {
   dailyCheck();
 }
 
-// ➕ 追加
 document.getElementById("saveBtn").onclick = () => {
   const title = document.getElementById("title").value;
   const deadline = document.getElementById("deadline").value;
@@ -148,20 +197,5 @@ document.getElementById("saveBtn").onclick = () => {
   modal.classList.add("hidden");
 };
 
-// 🚀 初期化
 render();
 dailyCheck();
-
-//通知試し
-// console.log("通知許可:", Notification.permission);
-// alert(Notification.permission);
-
-// 🔔 通知許可（Firebase用）
-if ("Notification" in window) {
-  Notification.requestPermission();
-}
-
-// 📱 Service Worker（PWA）
-if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("./firebase-messaging-sw.js");
-}
