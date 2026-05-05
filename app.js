@@ -150,22 +150,39 @@ window.onload = async () => {
     // ======================
     // 追加
     // ======================
-    document.getElementById("saveBtn").onclick = async () => {
+    // document.getElementById("saveBtn").onclick = async () => {
 
-      const title = document.getElementById("title").value;
-      const deadline = document.getElementById("deadline").value;
+    //   const title = document.getElementById("title").value;
+    //   const deadline = document.getElementById("deadline").value;
 
-      await addDoc(collection(db, "users", uid, "tasks"), {
-        title,
-        deadline,
-        completed: false,
-        notified: {
-          before: false,
-          today: false,
-          overdue: false
-        }
-      });
-    };
+    //   await addDoc(collection(db, "users", uid, "tasks"), {
+    //     title,
+    //     deadline,
+    //     completed: false,
+    //     notified: {
+    //       before: false,
+    //       today: false,
+    //       overdue: false
+    //     }
+    //   });
+    // };
+
+document.getElementById("saveBtn").onclick = async () => {
+  console.log("保存ボタン押された");
+
+  try {
+    const ref = await addDoc(collection(db, "users", uid, "tasks"), {
+      title: "テスト",
+      deadline: "2026-01-01",
+      completed: false
+    });
+
+    console.log("保存成功:", ref.id);
+
+  } catch (e) {
+    console.error("保存失敗:", e);
+  }
+};
 
     // ======================
     // 擬似Cron（自動通知）
