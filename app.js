@@ -14,8 +14,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   const messaging = getMessaging(app);
 
   // 🔔 通知許可
-  await Notification.requestPermission();
-
+  const permission = await Notification.requestPermission();
+  if (permission !== "granted") {
+    alert("通知が拒否されています");
+    return;
+  }
   // 📱 SW登録（先に！）
   const registration = await navigator.serviceWorker.register("./firebase-messaging-sw.js");
 
@@ -26,6 +29,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   console.log("トークン:", token);
+
+  if (!token) {
+    console.log("トークン取得失敗");
+  }
 
   // 👇 画面に表示（これが答え）
   document.body.insertAdjacentHTML("beforeend", `
@@ -43,9 +50,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   });
 
-
-  // 📱 SW登録
-  const registration = await navigator.serviceWorker.register("./firebase-messaging-sw.js");
 
   // ======================
   // アプリ機能
