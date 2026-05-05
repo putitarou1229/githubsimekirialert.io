@@ -26,8 +26,9 @@ messaging.onBackgroundMessage(function (payload) {
       icon: "./icon.png",
       badge: "./icon.png",
       vibrate: [200, 100, 200],
-      tag: "deadline-alert",
-      renotify: true
+
+      tag: payload.data?.id || "default",
+      renotify: false
     }
   );
 });

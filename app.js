@@ -56,12 +56,12 @@ window.onload = async () => {
   // ======================
   // フォアグラウンド通知
   // ======================
-  onMessage(messaging, (payload) => {
-    new Notification(payload.notification.title, {
-      body: payload.notification.body,
-      icon: "./icon.png"
-    });
-  });
+  // onMessage(messaging, (payload) => {
+  //   new Notification(payload.notification.title, {
+  //     body: payload.notification.body,
+  //     icon: "./icon.png"
+  //   });
+  // });
 
   // ======================
   // アプリ機能
