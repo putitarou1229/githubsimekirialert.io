@@ -36,7 +36,7 @@ messaging.onBackgroundMessage(function (payload) {
 // ==============================
 // 📦 キャッシュ設定（オフライン対応）
 // ==============================
-const CACHE_NAME = "deadline-app-v2";
+const CACHE_NAME = "deadline-app-v3";
 
 const urlsToCache = [
   "./",
