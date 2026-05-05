@@ -15,22 +15,15 @@ document.addEventListener("DOMContentLoaded", () => {
   const messaging = getMessaging(app);
 
   // 🔔 通知許可
-  Notification.requestPermission();
+  await Notification.requestPermission();
 
   // 🔑 トークン取得
-  getToken(messaging, {
-    vapidKey: "BES2l0snOl90A-49auNHyDvUjCk7Gt6TOAd7-1kVhT7piiu5OCnYY4wkZtWgahEUgxTOwgEk8LixBEc2vP74gcc"
-  }).then((token) => {
-    console.log("トークン:", token);
-
-    // デバッグ表示（後で消してOK）
-    document.body.insertAdjacentHTML("beforeend", `
-      <div style="padding:10px; word-break:break-all;">
-        <h3>トークン</h3>
-        <p>${token}</p>
-      </div>
-    `);
+  const token = await getToken(messaging, {
+    vapidKey: "BES2l0snOl90A-49auNHyDvUjCk7Gt6TOAd7-1kVhT7piiu5OCnYY4wkZtWgahEUgxTOwgEk8LixBEc2vP74gcc",
+    serviceWorkerRegistration: registration
   });
+
+  console.log("トークン:", token);
 
   // 🔔 フォアグラウンド通知
   onMessage(messaging, (payload) => {
@@ -41,8 +34,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // 📱 SW登録
-  navigator.serviceWorker.register("./firebase-messaging-sw.js");
-
+  const registration = await navigator.serviceWorker.register("./firebase-messaging-sw.js");
 
   // ======================
   // アプリ機能
@@ -81,7 +73,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  window.complete = function(index) {
+  window.complete = function (index) {
     items.splice(index, 1);
     saveData();
     render();
