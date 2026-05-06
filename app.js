@@ -70,7 +70,7 @@ window.onload = async () => {
   const registration = await navigator.serviceWorker.register("./firebase-messaging-sw.js");
 
   await getToken(messaging, {
-    vapidKey: "BES2l0snOl90A-49auNHyDvUjCk7Gt6TOAd7-1kVhT7piiu5OCnYY4wkZtWgahEUgxEk8LixBEc2vP74gcc",
+    vapidKey: "BES2l0snOl90A-49auNHyDvUjCk7Gt6TOAd7-1kVhT7piiu5OCnYY4wkZtWgahEUgxTOwgEk8LixBEc2vP74gcc",
     serviceWorkerRegistration: registration
   });
 
@@ -221,4 +221,4 @@ window.onload = async () => {
 
   checkTasks();
   setInterval(checkTasks, 5 * 60 * 1000);
-};
+};h
