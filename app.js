@@ -39,6 +39,17 @@ window.onload = async () => {
 
   const list = document.getElementById("list");
   const saveBtn = document.getElementById("saveBtn");
+  const addBtn = document.getElementById("addBtn");
+  const modal = document.getElementById("modal");
+  const closeBtn = document.getElementById("closeBtn");
+
+  addBtn.onclick = () => {
+    modal.classList.remove("hidden");
+  };
+
+  closeBtn.onclick = () => {
+    modal.classList.add("hidden");
+  };
 
   if (!saveBtn || !list) {
     console.error("HTML要素が見つかりません");
