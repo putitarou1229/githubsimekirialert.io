@@ -10,6 +10,7 @@ import {
   collection,
   addDoc,
   updateDoc,
+  deleteDoc, //削除機能
   doc,
   getDocs,
   onSnapshot
@@ -57,6 +58,7 @@ window.onload = async () => {
   }
 
   let uid = null;
+  let editId = null;
 
   // ======================
   // 匿名ログイン
@@ -142,6 +144,9 @@ window.onload = async () => {
           <p>期限: ${item.deadline}</p>
           <p>残り: ${days}日</p>
           <button onclick="complete('${item.id}')">完了</button>
+          <button onclick="editTask('${item.id}', '${item.title}', '${item.deadline}')">編集</button>
+          <button onclick="removeTask('${item.id}')">削除</button>
+          
         </div>
       `;
 
@@ -158,27 +163,59 @@ window.onload = async () => {
     });
   };
 
+  //編集処理
+  window.editTask = function (id, title, deadline) {
+
+    editId = id;
+
+    document.getElementById("title").value = title;
+    document.getElementById("deadline").value = deadline;
+
+    modal.classList.remove("hidden");
+  };
+
+
+  //削除処理
+  window.removeTask = async function (id) {
+    if (!confirm("削除する？")) return;
+    await deleteDoc(doc(db, "users", uid, "tasks", id));
+  };
+
   // ======================
   // 追加ボタン（完成版）
   // ======================
-  saveBtn.onclick = async () => {
+ saveBtn.onclick = async () => {
 
-    console.log("保存ボタン押された");
+  console.log("保存ボタン押された");
 
-    if (!uid) {
-      console.error("UID未取得");
-      return;
-    }
+  if (!uid) {
+    console.error("UID未取得");
+    return;
+  }
 
-    const title = document.getElementById("title")?.value;
-    const deadline = document.getElementById("deadline")?.value;
+  const title = document.getElementById("title")?.value;
+  const deadline = document.getElementById("deadline")?.value;
 
-    if (!title || !deadline) {
-      alert("入力してください");
-      return;
-    }
+  if (!title || !deadline) {
+    alert("入力してください");
+    return;
+  }
 
-    try {
+  try {
+
+    if (editId) {
+      // 編集モード
+      await updateDoc(doc(db, "users", uid, "tasks", editId), {
+        title: title.trim(),
+        deadline
+      });
+
+      console.log("更新成功:", editId);
+
+      editId = null;
+
+    } else {
+      // 新規追加
       const ref = await addDoc(
         collection(db, "users", uid, "tasks"),
         {
@@ -195,16 +232,17 @@ window.onload = async () => {
       );
 
       console.log("保存成功:", ref.id);
-
-      document.getElementById("title").value = "";
-      document.getElementById("deadline").value = "";
-
-      modal.classList.add("hidden");
-
-    } catch (e) {
-      console.error("保存失敗:", e);
     }
-  };
+
+    // 共通処理
+    document.getElementById("title").value = "";
+    document.getElementById("deadline").value = "";
+    modal.classList.add("hidden");
+
+  } catch (e) {
+    console.error("保存失敗:", e);
+  }
+};
 
   // ======================
   // 擬似Cron通知
