@@ -199,6 +199,8 @@ window.onload = async () => {
       document.getElementById("title").value = "";
       document.getElementById("deadline").value = "";
 
+      modal.classList.add("hidden");
+
     } catch (e) {
       console.error("保存失敗:", e);
     }
