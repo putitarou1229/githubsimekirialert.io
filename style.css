@@ -26,9 +26,6 @@ ul {
   padding: 0;
 }
 
-/* ======================
-   タスクカード
-====================== */
 li {
   background: white;
   margin: 10px;
@@ -36,32 +33,41 @@ li {
   border-radius: 10px;
 }
 
-/* 安全（余裕） */
 .task.safe {
   border-left: 6px solid green;
   background: #e8f5e9;
 }
 
-/* 注意 */
 .task.warning {
   border-left: 6px solid orange;
   background: #fff3cd;
 }
 
-/* 危険・期限切れ */
 .task.overdue {
   border-left: 6px solid red;
   background: #ffdddd;
 }
 
 /* モーダル */
-.hidden {
+#modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+#modal.hidden {
   display: none;
 }
 
 .modal-content {
   background: white;
   padding: 20px;
-  margin: 50px;
   border-radius: 10px;
 }
