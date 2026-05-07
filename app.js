@@ -127,6 +127,8 @@ window.onload = async () => {
 
     list.innerHTML = "";
 
+    items = items.filter(item => !item.completed);
+
     items.sort((a, b) =>
       new Date(a.deadline) - new Date(b.deadline)
     );
@@ -184,65 +186,65 @@ window.onload = async () => {
   // ======================
   // 追加ボタン（完成版）
   // ======================
- saveBtn.onclick = async () => {
+  saveBtn.onclick = async () => {
 
-  console.log("保存ボタン押された");
+    console.log("保存ボタン押された");
 
-  if (!uid) {
-    console.error("UID未取得");
-    return;
-  }
-
-  const title = document.getElementById("title")?.value;
-  const deadline = document.getElementById("deadline")?.value;
-
-  if (!title || !deadline) {
-    alert("入力してください");
-    return;
-  }
-
-  try {
-
-    if (editId) {
-      // 編集モード
-      await updateDoc(doc(db, "users", uid, "tasks", editId), {
-        title: title.trim(),
-        deadline
-      });
-
-      console.log("更新成功:", editId);
-
-      editId = null;
-
-    } else {
-      // 新規追加
-      const ref = await addDoc(
-        collection(db, "users", uid, "tasks"),
-        {
-          title: title.trim(),
-          deadline,
-          completed: false,
-          notified: {
-            before: false,
-            today: false,
-            overdue: false
-          },
-          createdAt: new Date()
-        }
-      );
-
-      console.log("保存成功:", ref.id);
+    if (!uid) {
+      console.error("UID未取得");
+      return;
     }
 
-    // 共通処理
-    document.getElementById("title").value = "";
-    document.getElementById("deadline").value = "";
-    modal.classList.add("hidden");
+    const title = document.getElementById("title")?.value;
+    const deadline = document.getElementById("deadline")?.value;
 
-  } catch (e) {
-    console.error("保存失敗:", e);
-  }
-};
+    if (!title || !deadline) {
+      alert("入力してください");
+      return;
+    }
+
+    try {
+
+      if (editId) {
+        // 編集モード
+        await updateDoc(doc(db, "users", uid, "tasks", editId), {
+          title: title.trim(),
+          deadline
+        });
+
+        console.log("更新成功:", editId);
+
+        editId = null;
+
+      } else {
+        // 新規追加
+        const ref = await addDoc(
+          collection(db, "users", uid, "tasks"),
+          {
+            title: title.trim(),
+            deadline,
+            completed: false,
+            notified: {
+              before: false,
+              today: false,
+              overdue: false
+            },
+            createdAt: new Date()
+          }
+        );
+
+        console.log("保存成功:", ref.id);
+      }
+
+      // 共通処理
+      document.getElementById("title").value = "";
+      document.getElementById("deadline").value = "";
+      modal.classList.add("hidden");
+
+    } catch (e) {
+      console.error("保存失敗:", e);
+    }
+  };
 
   // ======================
   // 擬似Cron通知
