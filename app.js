@@ -95,14 +95,21 @@ window.onload = async () => {
   // 日数計算
   // ======================
   function getDaysLeft(deadline) {
+
     const now = new Date();
     const target = new Date(deadline);
-    return Math.ceil((target - now) / (1000 * 60 * 60 * 24));
+
+    return Math.ceil(
+      (target - now) / (1000 * 60 * 60 * 24)
+    );
   }
 
   function getStatus(days) {
-    if (days <= 0) return "overdue";
+
+    if (days < 0) return "overdue";
+
     if (days <= 3) return "warning";
+
     return "safe";
   }
 
@@ -144,7 +151,12 @@ window.onload = async () => {
         <div class="task ${status}">
           <h3>${item.title}</h3>
           <p>期限: ${item.deadline}</p>
-          <p>残り: ${days}日</p>
+           
+          <p>${days < 0
+          ? "期限切れ"
+          : `残り: ${days}日`}
+          </p>
+
           <button onclick="complete('${item.id}')">完了</button>
           <button onclick="editTask('${item.id}', '${item.title}', '${item.deadline}')">編集</button>
           <button onclick="removeTask('${item.id}')">削除</button>
