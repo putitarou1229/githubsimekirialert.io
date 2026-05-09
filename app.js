@@ -89,13 +89,20 @@ window.onload = async () => {
   //追記箇所⇓
   console.log("FCMトークン:", token);
   await addDoc(collection(db, "tokens"), {
-  uid,
-  token,
-  createdAt: new Date()
-});
+    uid,
+    token,
+    createdAt: new Date()
+  });
 
   onMessage(messaging, (payload) => {
     console.log("foreground:", payload);
+    new Notification(
+      payload.notification.title,
+      {
+        body: payload.notification.body,
+        icon: "./icon.png"
+      }
+    );
   });
 
   // ======================
