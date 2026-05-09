@@ -16,22 +16,22 @@ const messaging = firebase.messaging();
 // ==============================
 // 🔔 プッシュ通知（バックグラウンド）
 // ==============================
-messaging.onBackgroundMessage(function (payload) {
-  console.log("バックグラウンド通知:", payload);
+// messaging.onBackgroundMessage(function (payload) {
+//   console.log("バックグラウンド通知:", payload);
 
-  self.registration.showNotification(
-    payload.notification?.title || "締切りアラーム",
-    {
-      body: payload.notification?.body || "通知があります",
-      icon: "./icon.png",
-      badge: "./icon.png",
-      vibrate: [200, 100, 200],
+//   self.registration.showNotification(
+//     payload.notification?.title || "締切りアラーム",
+//     {
+//       body: payload.notification?.body || "通知があります",
+//       icon: "./icon.png",
+//       badge: "./icon.png",
+//       vibrate: [200, 100, 200],
 
-      tag: payload.data?.id || "default",
-      renotify: false
-    }
-  );
-});
+//       tag: payload.data?.id || "default",
+//       renotify: false
+//     }
+//   );
+// });
 
 
 // ==============================
