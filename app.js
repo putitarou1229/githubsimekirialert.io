@@ -86,7 +86,14 @@ window.onload = async () => {
     vapidKey: "BES2l0snOl90A-49auNHyDvUjCk7Gt6TOAd7-1kVhT7piiu5OCnYY4wkZtWgahEUgxTOwgEk8LixBEc2vP74gcc",
     serviceWorkerRegistration: registration
   });
+  //追記箇所⇓
   console.log("FCMトークン:", token);
+  await addDoc(collection(db, "tokens"), {
+  uid,
+  token,
+  createdAt: new Date()
+});
+
   onMessage(messaging, (payload) => {
     console.log("foreground:", payload);
   });
